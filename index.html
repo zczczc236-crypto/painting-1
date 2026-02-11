@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그림웹</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="toolbar">
+  브러시: <select id="brush-type"></select>
+  크기: <select id="brush-size"></select>
+  <input type="color" id="color" value="#000000">
+  <button id="undo">취소</button>
+  <button id="redo">되돌리기</button>
+  <button id="fill">페인트통</button>
+  <button id="save">그림저장</button>
+  <button id="add-layer">레이어추가</button>
+  캔버스 가로: <input type="number" id="canvas-width" value="800" style="width:60px;">
+  세로: <input type="number" id="canvas-height" value="600" style="width:60px;">
+  <button id="resize-canvas">적용</button>
+  <input type="file" id="image-input" accept="image/*">
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="layers-panel"></div>
+<div id="gallery-panel"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
