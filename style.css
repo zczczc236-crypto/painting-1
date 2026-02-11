@@ -199,6 +199,116 @@ container.addEventListener('touchend', e=>{ if(e.touches.length<2) lastZoomDist=
 // 이미지 삽입
 imageInput.addEventListener('change', handleImageInsert);
 function handleImageInsert(e){ /* 이전 모바일 삽입 코드 그대로 적용 */ }
+imageInput.addEventListener('change',(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = new Image();
+  img.onload=()=>{
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width=img.width;
+    tempCanvas.height=img.height;
+    const tempCtx=tempCanvas.getContext('2d');
+    tempCtx.drawImage(img,0,0);
 
+    const overlay = document.createElement('canvas');
+    overlay.width=container.clientWidth;
+    overlay.height=container.clientHeight;
+    overlay.style.position='absolute';
+    overlay.style.top='0'; overlay.style.left='0';
+    container.appendChild(overlay);
+    const octx=overlay.getContext('2d');
+
+    let x=(overlay.width-img.width)/2, y=(overlay.height-img.height)/2;
+    let scale=1, angle=0;
+    let lastDist=0, lastAngle=0;
+    let dragging=false, lastPos={x:0,y:0};
+
+    function drawOverlay(){
+      octx.clearRect(0,0,overlay.width,overlay.height);
+      octx.save();
+      octx.translate(x+tempCanvas.width*scale/2, y+tempCanvas.height*scale/2);
+      octx.rotate(angle*Math.PI/180);
+      octx.drawImage(tempCanvas, -tempCanvas.width*scale/2, -tempCanvas.height*scale/2, tempCanvas.width*scale, tempCanvas.height*scale);
+      octx.restore();
+    }
+    drawOverlay();
+
+    overlay.addEventListener('touchstart',(e)=>{
+      if(e.touches.length==1){
+        dragging=true;
+        const t=e.touches[0];
+        lastPos={x:t.clientX, y:t.clientY};
+      }
+      if(e.touches.length==2){
+        lastDist = getDistance(e.touches[0], e.touches[1]);
+        lastAngle = getAngle(e.touches[0], e.touches[1]);
+      }
+    });
+
+    overlay.addEventListener('touchmove',(e)=>{
+      e.preventDefault();
+      if(e.touches.length==1 && dragging){
+        const t=e.touches[0];
+        x += t.clientX-lastPos.x;
+        y += t.clientY-lastPos.y;
+        lastPos={x:t.clientX, y:t.clientY};
+      }
+      if(e.touches.length==2){
+        const newDist = getDistance(e.touches[0], e.touches[1]);
+        const newAngle = getAngle(e.touches[0], e.touches[1]);
+        scale *= newDist/lastDist;
+        angle += (newAngle-lastAngle);
+        lastDist=newDist;
+        lastAngle=newAngle;
+      }
+      drawOverlay();
+    });
+
+    overlay.addEventListener('touchend',(e)=>{
+      if(e.touches.length==0) dragging=false;
+    });
+
+    function getDistance(p1,p2){
+      return Math.hypot(p2.clientX-p1.clientX, p2.clientY-p1.clientY);
+    }
+    function getAngle(p1,p2){
+      return Math.atan2(p2.clientY-p1.clientY, p2.clientX-p1.clientX)*180/Math.PI;
+    }
+
+    const confirmBtn=document.createElement('button');
+    confirmBtn.textContent='✔';
+    confirmBtn.style.position='absolute';
+    confirmBtn.style.bottom='10px';
+    confirmBtn.style.right='10px';
+    confirmBtn.style.fontSize='20px';
+    confirmBtn.style.zIndex='1000';
+    container.appendChild(confirmBtn);
+
+    const cancelBtn=document.createElement('button');
+    cancelBtn.textContent='✖';
+    cancelBtn.style.position='absolute';
+    cancelBtn.style.bottom='10px';
+    cancelBtn.style.right='60px';
+    cancelBtn.style.fontSize='20px';
+    cancelBtn.style.zIndex='1000';
+    container.appendChild(cancelBtn);
+
+    confirmBtn.addEventListener('click',()=>{
+      activeLayer.ctx.drawImage(overlay,0,0);
+      saveHistory();
+      container.removeChild(overlay);
+      container.removeChild(confirmBtn);
+      container.removeChild(cancelBtn);
+    });
+    cancelBtn.addEventListener('click',()=>{
+      container.removeChild(overlay);
+      container.removeChild(confirmBtn);
+      container.removeChild(cancelBtn);
+    });
+
+  };
+  img.src=URL.createObjectURL(file);
+});
+  
 // 초기 레이어
 createLayer('Layer 1');
